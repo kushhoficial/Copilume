@@ -5,6 +5,8 @@
   <img src="Assets/LockupLight.svg" alt="Copilume — por kushhoficial" width="620">
 </picture>
 
+[![Build and test](https://github.com/kushhoficial/Copilume/actions/workflows/build.yml/badge.svg)](https://github.com/kushhoficial/Copilume/actions/workflows/build.yml)
+
 **Copie agora. Reencontre depois.** Histórico de textos, links e imagens para macOS, gratuito e open source sob licença [MIT](LICENSE).
 
 ![Interface clara](docs/preview.png)

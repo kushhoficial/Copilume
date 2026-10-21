@@ -2,6 +2,14 @@
 
 21/10/2026. Apple Silicon arm64, macOS 27.0.1, Swift 6.4 / Command Line Tools. Nenhuma dependência instalada.
 
+## Publicação pública verificada
+
+Em 21/10/2026, o commit `a66b815` passou pela [CI de main](https://github.com/kushhoficial/Copilume/actions/runs/39598491194) e pela [CI da tag v1.3.0](https://github.com/kushhoficial/Copilume/actions/runs/39598772641). O job de Release terminou com sucesso e publicou DMG e SHA-256 em [Copilume 1.3.0](https://github.com/kushhoficial/Copilume/releases/tag/v1.3.0).
+
+O DMG público foi baixado novamente, teve seu SHA-256 comparado ao arquivo da Release, foi montado somente leitura e teve assinatura, versão e fatias arm64/x86_64 verificadas. SHA-256 do DMG publicado: `23f8e64958db7fad8407f446a3915dda94570de1261d60c17d184c473dc5e1ea`. Esse pacote foi compilado na CI; pode diferir do build local devido a toolchain, assinatura e metadados do disco.
+
+A verificação não contou o download como execução ponta a ponta do aplicativo: a cópia instalada do usuário foi preservada e não houve novo pedido de Acessibilidade.
+
 ## Testado nesta versão
 
 - **84 verificações passaram**: 74 de modelo/codec/clipboard e 10 de integração da captura real `App.poll` em pasteboard privado. Saída em `test-results.txt`. Somente dados sintéticos.
