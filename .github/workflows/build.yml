@@ -1,0 +1,68 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: /Library/Developer/CommandLineTools
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          swiftc --version
+          xcrun --show-sdk-version
+      - name: Tests
+        run: ./test.sh
+      - name: Universal app
+        run: ./build.sh
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="$(cat VERSION)"
+          [[ "$GITHUB_REF_NAME" == "v$VERSION" ]] || { echo 'Tag and app version differ.' >&2; exit 1; }
+      - name: DMG
+        run: ./package.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Copilume-universal
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download verified package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name Copilume-universal --dir dist
+      - name: Verify download checksum
+        run: cd dist && sha256sum -c SHA256SUMS.txt
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.dmg dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "Copilume ${GITHUB_REF_NAME#v}" --notes-file docs/RELEASE-NOTES.md

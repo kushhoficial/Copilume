@@ -1,0 +1,21 @@
+IDENTIDADE OFICIAL IMPLEMENTADA
+
+A prancha aprovada foi fornecida por kushhoficial e está preservada em Assets/OfficialBrandBoard.png. Consulte Assets/README.md para arquivos de produção, paleta e origem. Não é necessário gerar uma nova proposta de marca. Preserve a assinatura por kushhoficial.
+
+BRIEFING ORIGINAL (referência histórica):
+
+Crie uma identidade visual profissional para “Copilume”, aplicativo gratuito e open source de histórico da área de transferência para macOS.
+
+Conceito: “Copie agora. Reencontre depois.” O produto devolve ao alcance textos e links que a pessoa copiou, com busca instantânea e atalho Option + V. O nome combina copiar com lume: clareza, recuperação e memória. O aplicativo funciona localmente e não usa nuvem, IA ou telemetria.
+
+Direção visual: calma, precisão e utilidade. Linguagem contemporânea do macOS, com vidro translúcido, profundidade sutil, bordas macias e contraste legível. Cores: azul-petróleo, ciano moderado e branco gelo; variante escura em azul profundo. Evite aparência de aplicativo cripto, chatbot, neon gamer ou banco.
+
+Crie um símbolo original e reconhecível em tamanho pequeno, explorando duas ou três folhas que se reencontram ou um gesto de retorno iluminado. Evite copiar o Finder, Windows, marcas existentes, letras de nomes pessoais, mascotes e excesso de brilhos. Não inclua arroba no símbolo. Preserve obrigatoriamente a assinatura do criador “@kushhoficial” nos créditos, na apresentação do projeto e na documentação. O nome do aplicativo continua “Copilume”; a assinatura é uma atribuição de autoria separada do símbolo.
+
+Entregas desejadas:
+1. Ícone principal quadrado, 1024 × 1024, centralizado, com margens adequadas para o sistema macOS aplicar sua máscara; sem mockup de computador.
+2. Variante monocromática simples do símbolo para barra de menus, legível a 16–22 px, sobre fundo transparente.
+3. Lockup separado com o nome “Copilume”, legível e sem slogans incorporados ao ícone.
+4. Uma pequena paleta e indicação de tipografia compatível com a família SF do macOS.
+
+Priorize clareza em 32 px. O efeito de vidro deve ser discreto e fisicamente coerente, com camadas limpas. Use apenas elementos originais. A imagem será uma proposta visual; o ícone de produção pode ser redesenhado em vetor para legibilidade e acessibilidade.

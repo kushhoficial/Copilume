@@ -1,0 +1,3 @@
+Copilume 1.2.0 includes an x86_64 slice: cross-compilation and linking completed.
+The Intel executable was not run in this iteration. No physical Intel Mac was tested.
+The local linker warned that libswiftCompatibilityPacks.a has no x86_64 slice; linking succeeded.
