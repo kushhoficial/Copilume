@@ -9,7 +9,7 @@ try {
     $version = (Get-Content -LiteralPath VERSION -Raw).Trim()
     $buildNumber = (Get-Content -LiteralPath BUILD_NUMBER -Raw).Trim()
     if ($version -notmatch '^\d+\.\d+\.\d+$' -or $buildNumber -notmatch '^\d+$') { throw 'Invalid version.' }
-    $output = Join-Path $PSScriptRoot "build/windows/win-$Architecture"
+    $output = Join-Path $PSScriptRoot "build/windows/$version/win-$Architecture"
     New-Item -ItemType Directory -Force $output | Out-Null
     # Multi-resolution ICO generated from the official brand asset, without external tools.
     Add-Type -AssemblyName System.Drawing

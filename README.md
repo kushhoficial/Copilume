@@ -11,7 +11,10 @@
 
 **Windows:** aplicativo nativo com **Alt + V**, busca, filtros, fixados, imagens, bandeja e persistência criptografada opcional. Veja [instalação, compilação e privacidade no Windows](docs/WINDOWS.md). A versão Windows é nova neste código; a Release macOS v1.3.0 anterior não contém esse pacote. Os comandos e detalhes macOS continuam abaixo.
 
-![Interface Windows em tema escuro com dados fictícios](docs/windows-dark.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/windows-dark.png">
+  <img src="docs/windows-light.png" alt="Copilume para Windows — prévia com dados fictícios" width="520">
+</picture>
 
 ![Interface clara](docs/preview.png)
 

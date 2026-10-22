@@ -1,4 +1,4 @@
-Copilume 1.4.0 — por **kushhoficial**. Histórico local de textos, links e imagens para **macOS e Windows**.
+Copilume 1.4.1 — por **kushhoficial**. Histórico local de textos, links e imagens para **macOS e Windows**.
 
 ## Windows — novo
 
@@ -7,6 +7,7 @@ Copilume 1.4.0 — por **kushhoficial**. Histórico local de textos, links e ima
 - Histórico apenas em memória por padrão; persistência opcional criptografada para seu usuário Windows.
 - Colagem automática e início no login opcionais, desligados por padrão.
 - ZIP portátil x64 ou ARM64 com runtime incluído: extraia todo o pacote e abra `Copilume.exe`.
+- Novo acabamento inspirado no Mac: painel em vidro, filtros segmentados, cartões compactos e ícones vetoriais. Preferências, prévia e apresentação seguem a mesma identidade. Acrylic nativo no Windows 11 22H2+, com acabamento compatível no Windows 10.
 
 Os pacotes Windows iniciais não possuem assinatura Authenticode. Não desative proteções do Windows; a compilação local é documentada em `docs/WINDOWS.md`. A colagem automática respeita o foco e os limites do sistema; destinos elevados/protegidos podem exigir Ctrl + V manual. ARM64 foi compilado, sem execução em hardware ARM64. Consulte `docs/WINDOWS-TESTING.md` para o alcance dos testes.
 

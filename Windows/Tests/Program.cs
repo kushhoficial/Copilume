@@ -131,17 +131,75 @@ internal static class Program
         var app = new App(); app.InitializeComponent();
         var window = new MainWindow(true, dark ? "Escuro" : "Claro");
         window.Initialize(); window.Show(); window.UpdateLayout();
-        var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(window);
-        var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
-        using (var file = File.Create(path)) png.Save(file);
+        // WPF rendering cannot capture DWM's desktop backdrop. Use the actual solid fallback for reproducible previews.
+        ((Border)window.FindName("ShellBorder")).SetResourceReference(Border.BackgroundProperty, "Surface");
+        window.UpdateLayout();
+        Snapshot(window, path);
         Check(window.FindName("Clips") is ListBox { Items.Count: 4 }, "demo renders four synthetic clips");
+        var list = (ListBox)window.FindName("Clips");
+        var imageClip = ((ClipRow)list.Items[0]).Clip;
         ((TextBox)window.FindName("SearchBox")).Text = "github";
         Check(((ListBox)window.FindName("Clips")).Items.Count == 1, "UI search binding");
         ((TextBox)window.FindName("SearchBox")).Text = "";
-        ((ComboBox)window.FindName("Filter")).SelectedIndex = 4;
+        ((ListBox)window.FindName("Filter")).SelectedIndex = 4;
         Check(((ListBox)window.FindName("Clips")).Items.Count == 1, "UI image filter binding");
+        ((ListBox)window.FindName("Filter")).SelectedIndex = 0;
+        ((Button)window.FindName("PinButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        ((ListBox)window.FindName("Filter")).SelectedIndex = 1;
+        Check(list.Items.Count == 2, "pin toolbar action and segmented filter");
+        ((Button)window.FindName("PinButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(list.Items.Count == 1, "unpin updates active filter");
+        ((ListBox)window.FindName("Filter")).SelectedIndex = 0;
+        ((Button)window.FindName("PauseButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(((TextBlock)window.FindName("PauseLabel")).Text == "Retomar", "pause preserves icon button and updates label");
+        ((Button)window.FindName("PauseButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(((TextBlock)window.FindName("CaptureLabel")).Text == "Somente neste computador", "resume updates capture status");
+        var settings = window.BuildSettings(); settings.Show(); settings.SolidPreview(); settings.UpdateLayout();
+        Check(Descendants<CheckBox>(settings).Count(x => !x.IsEnabled) == 3, "demo preferences cannot enable storage, paste or login");
+        Snapshot(settings, Path.ChangeExtension(path, null) + "-preferences.png");
+        var appearance = Descendants<ListBox>(settings).Single();
+        appearance.SelectedItem = dark ? "Claro" : "Escuro";
+        Check(Theme.IsDark == !dark, "appearance segments update theme live");
+        appearance.SelectedItem = dark ? "Escuro" : "Claro";
+        settings.Close();
+        var preview = window.BuildPreview(imageClip); preview.Show(); preview.SolidPreview(); preview.UpdateLayout();
+        Check(Descendants<System.Windows.Controls.Image>(preview).Any(x => x.Source is BitmapSource { PixelWidth: 320, PixelHeight: 180 }), "image preview retains original raster resolution");
+        Snapshot(preview, Path.ChangeExtension(path, null) + "-image.png"); preview.Close();
+        var textPreview = window.BuildPreview(new Clip { Text = "Synthetic full text\nwith original line breaks." });
+        textPreview.Show(); textPreview.UpdateLayout();
+        Check(Descendants<TextBox>(textPreview).Any(x => x.IsReadOnly && x.Text == "Synthetic full text\nwith original line breaks."), "text preview preserves full content and line breaks");
+        textPreview.Close();
+        var about = window.BuildAbout(); about.Show(); about.SolidPreview(); about.UpdateLayout();
+        Check(Descendants<TextBlock>(about).Any(x => x.Text.Contains("kushhoficial") && x.Text.Contains("MIT")), "project window preserves signature and license");
+        Snapshot(about, Path.ChangeExtension(path, null) + "-about.png"); about.Close();
+        ((TextBox)window.FindName("SearchBox")).Text = "no synthetic clip matches this";
+        Check(list.Items.Count == 0 && !((Button)window.FindName("DeleteButton")).IsEnabled && !((Button)window.FindName("PreviewButton")).IsEnabled, "empty search disables item actions");
+        ((TextBox)window.FindName("SearchBox")).Text = "";
+        window.Width = window.MinWidth; window.Height = window.MinHeight; window.UpdateLayout();
+        ((Border)window.FindName("ShellBorder")).SetResourceReference(Border.BackgroundProperty, "Surface");
+        var footer = (Button)window.FindName("FooterButton");
+        var location = footer.TranslatePoint(new Point(), window);
+        Check(location.Y + footer.ActualHeight <= window.ActualHeight && location.X >= 0, "footer remains visible at minimum window size");
+        Snapshot(window, Path.ChangeExtension(path, null) + "-compact.png");
         window.Quit();
+    }
+
+    private static IEnumerable<T> Descendants<T>(DependencyObject node) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++)
+        {
+            var child = VisualTreeHelper.GetChild(node, i);
+            if (child is T result) yield return result;
+            foreach (var nested in Descendants<T>(child)) yield return nested;
+        }
+    }
+    private static void Snapshot(Window window, string path)
+    {
+        window.UpdateLayout();
+        var bitmap = new RenderTargetBitmap((int)window.ActualWidth * 2, (int)window.ActualHeight * 2, 192, 192, PixelFormats.Pbgra32);
+        bitmap.Render(window);
+        var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
+        using var file = File.Create(path); png.Save(file);
     }
 
     private sealed class FakeClipboard : IClipboardAccess

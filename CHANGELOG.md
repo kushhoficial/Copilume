@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.1 — Acabamento Windows (em preparação)
+
+- Interface Windows redesenhada a partir da composição macOS: painel arredondado, cabeçalho em vidro, busca em cápsula e cinco filtros segmentados.
+- Cartões compactos com ícones vetoriais, miniaturas proporcionais, metadados e indicador de fixação; barra de ações arredondada com nomes acessíveis e foco de teclado.
+- Desktop Acrylic pela API pública do DWM no Windows 11 22H2+, com acabamento sólido e gradientes no Windows 10 e sistemas sem transparência. Respeita alto contraste e a opção de transparência do Windows.
+- Preferências, prévia, apresentação e confirmação de limpeza com a mesma identidade; controles arredondados, alternadores e aparência segmentada.
+- Tipografia suavizada, assets escalados com alta qualidade e prévias PNG em resolução 2×.
+- Testes de interface ampliados para ações, estados vazios, privacidade no modo de demonstração, troca de tema, prévias e tamanho mínimo.
+
 ## 1.4.0 — Windows e macOS (em preparação)
 
 - Aplicativo nativo WPF/.NET para Windows 10/11 x64 e ARM64, mantendo Swift/AppKit no macOS.

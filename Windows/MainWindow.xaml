@@ -1,34 +1,76 @@
-<Window x:Class="Copilume.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="Copilume — por kushhoficial" Style="{StaticResource {x:Type Window}}" Width="580" Height="700" MinWidth="480" MinHeight="500" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" PreviewKeyDown="OnKeyDown">
- <Grid Margin="22">
-  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <Grid Margin="0,0,0,18">
-   <StackPanel Orientation="Horizontal"><Image Source="Assets/AppIcon.png" Width="48" Height="48" Margin="0,0,12,0"/><StackPanel><TextBlock FontSize="28" FontWeight="Bold"><Run Text="Copi"/><Run Text="lume" Foreground="#38BDF8"/></TextBlock><TextBlock Text="por kushhoficial" Foreground="{DynamicResource Muted}"/></StackPanel></StackPanel>
-   <Button x:Name="ShortcutBadge" Content="Alt + V" HorizontalAlignment="Right" VerticalAlignment="Center" Click="SettingsClick" ToolTip="Configurar atalho"/>
+<Window x:Class="Copilume.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+ Title="Copilume — por kushhoficial" Style="{StaticResource {x:Type Window}}" Width="520" Height="700" MinWidth="480" MinHeight="620" WindowStyle="None" Background="Transparent" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" PreviewKeyDown="OnKeyDown">
+ <shell:WindowChrome.WindowChrome><shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="24" UseAeroCaptionButtons="False"/></shell:WindowChrome.WindowChrome>
+ <Border x:Name="ShellBorder" CornerRadius="24" BorderBrush="{DynamicResource Hairline}" BorderThickness="1" Background="{DynamicResource Surface}">
+  <Grid>
+   <Border x:Name="Ambient" CornerRadius="24" IsHitTestVisible="False"><Border.Background><RadialGradientBrush Center="0.05,0.05" GradientOrigin="0.05,0.05" RadiusX="1.15" RadiusY="0.8"><GradientStop Color="#286ACDE5" Offset="0"/><GradientStop Color="Transparent" Offset="1"/></RadialGradientBrush></Border.Background></Border>
+   <Grid Margin="16,14,16,12">
+    <Grid.RowDefinitions><RowDefinition Height="24"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Grid MouseLeftButtonDown="DragPanel" Background="Transparent" Margin="6,0,4,7">
+     <TextBlock Text="ÁREA DE TRANSFERÊNCIA" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" IsHitTestVisible="False"/>
+     <Button Style="{StaticResource ToolButton}" Width="24" Height="24" Padding="6" Background="Transparent" HorizontalAlignment="Right" Click="ClosePanel" AutomationProperties.Name="Fechar histórico" ToolTip="Fechar (Esc)"><Path Style="{StaticResource Glyph}" Data="{StaticResource CloseIcon}" Width="12" Height="12"/></Button>
+    </Grid>
+    <Border Grid.Row="1" CornerRadius="24" Background="{DynamicResource Glass}" BorderBrush="{DynamicResource Hairline}" BorderThickness="1" Padding="18,18,18,14" Margin="0,7,0,0">
+     <StackPanel>
+      <Grid MouseLeftButtonDown="DragPanel" Background="Transparent" Margin="0,0,0,18">
+       <StackPanel Orientation="Horizontal" IsHitTestVisible="False"><Image Source="Assets/AppIcon.png" Width="44" Height="44" RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,12,0"/><StackPanel VerticalAlignment="Center"><TextBlock FontSize="26" FontWeight="Bold"><Run Text="Copi"/><Run Text="lume" Foreground="#38BDF8"/></TextBlock><TextBlock FontSize="11" Foreground="{DynamicResource Muted}"><Run Text="por "/><Run Text="kushhoficial" FontWeight="SemiBold"/></TextBlock></StackPanel></StackPanel>
+       <Button x:Name="ShortcutBadge" Content="Alt + V" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{DynamicResource Accent}" Background="Transparent" BorderThickness="0" Padding="8" HorizontalAlignment="Right" VerticalAlignment="Center" Click="SettingsClick" ToolTip="Configurar atalho"/>
+      </Grid>
+      <Grid Margin="0,0,0,12">
+       <TextBox x:Name="SearchBox" Height="40" Padding="38,10,12,9" TextChanged="SearchChanged" AutomationProperties.Name="Pesquisar no histórico" ToolTip="Buscar textos, links ou dimensões de imagens"/>
+       <Path Data="{StaticResource SearchIcon}" Stroke="{DynamicResource Muted}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Left" Margin="14,0,0,0" IsHitTestVisible="False"/>
+       <TextBlock Text="Pesquisar no histórico" Margin="39,0,0,0" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+      </Grid>
+      <Border CornerRadius="17" Background="{DynamicResource Hover}" BorderBrush="{DynamicResource Hairline}" BorderThickness="1" Padding="3">
+       <ListBox x:Name="Filter" SelectedIndex="0" SelectionChanged="FilterChanged" Background="Transparent" BorderThickness="0" ItemContainerStyle="{StaticResource Segment}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Filtrar histórico">
+        <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+        <ListBoxItem Content="Todos"/><ListBoxItem Content="Fixados"/><ListBoxItem Content="Links"/><ListBoxItem Content="Textos"/><ListBoxItem Content="Imagens"/>
+       </ListBox>
+      </Border>
+     </StackPanel>
+    </Border>
+    <DockPanel Grid.Row="2" Margin="8,15,8,12"><TextBlock x:Name="CountLabel" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Muted}"/><TextBlock x:Name="CaptureLabel" Text="Somente neste computador" FontSize="10" Foreground="{DynamicResource Muted}" HorizontalAlignment="Right"/></DockPanel>
+    <Grid Grid.Row="3">
+     <ListBox x:Name="Clips" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Ink}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" SelectionChanged="ClipSelectionChanged" MouseDoubleClick="ChooseClick" MouseRightButtonUp="RowMenu" AutomationProperties.Name="Itens do histórico">
+      <ListBox.Template><ControlTemplate TargetType="ListBox"><ScrollViewer CanContentScroll="True" Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+       <ScrollViewer.Template><ControlTemplate TargetType="ScrollViewer"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="7"/></Grid.ColumnDefinitions><ScrollContentPresenter x:Name="PART_ScrollContentPresenter" CanContentScroll="{TemplateBinding CanContentScroll}"/><ScrollBar x:Name="PART_VerticalScrollBar" Grid.Column="1" Style="{StaticResource SlimScrollBar}" Orientation="Vertical" Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}" Value="{Binding VerticalOffset, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/></Grid></ControlTemplate></ScrollViewer.Template>
+       <ItemsPresenter/>
+      </ScrollViewer></ControlTemplate></ListBox.Template>
+      <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Margin" Value="0,0,3,9"/><Setter Property="Padding" Value="15,14"/>
+       <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+        <Border x:Name="Card" CornerRadius="18" Padding="{TemplateBinding Padding}" BorderBrush="Transparent" BorderThickness="1" Background="{DynamicResource Card}"><ContentPresenter/></Border>
+        <ControlTemplate.Triggers>
+         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource Hairline}"/></Trigger>
+         <Trigger Property="IsSelected" Value="True"><Setter TargetName="Card" Property="Background" Value="{DynamicResource Selection}"/><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource Accent}"/></Trigger>
+         <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Card" Property="BorderThickness" Value="2"/></Trigger>
+        </ControlTemplate.Triggers>
+       </ControlTemplate></Setter.Value></Setter>
+      </Style></ListBox.ItemContainerStyle>
+      <ListBox.ItemTemplate><DataTemplate>
+       <Grid Height="52"><Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/></Grid.ColumnDefinitions>
+        <Border x:Name="IconTile" CornerRadius="13" Background="{DynamicResource Hover}" Width="44" Height="44" HorizontalAlignment="Left" VerticalAlignment="Center"><Path Data="{Binding Glyph}" Stroke="{DynamicResource Accent}" StrokeThickness="1.65" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Width="20" Height="20" Stretch="Uniform"/></Border>
+        <Border x:Name="ThumbnailTile" CornerRadius="11" Width="44" Height="44" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Center"><Border.Background><ImageBrush ImageSource="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/></Border.Background></Border>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="7,0,6,0"><TextBlock Text="{Binding DisplayTitle}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/><TextBlock Text="{Binding Metadata}" FontSize="10" Foreground="{DynamicResource Muted}" TextTrimming="CharacterEllipsis"/></StackPanel>
+        <Path x:Name="PinnedMark" Grid.Column="2" Data="{StaticResource PinIcon}" Stroke="{DynamicResource Accent}" StrokeThickness="1.6" Width="10" Height="12" Stretch="Uniform" VerticalAlignment="Top" Visibility="Collapsed"/>
+       </Grid>
+       <DataTemplate.Triggers><DataTrigger Binding="{Binding Clip.IsImage}" Value="True"><Setter TargetName="IconTile" Property="Visibility" Value="Collapsed"/><Setter TargetName="ThumbnailTile" Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding Clip.Pinned}" Value="True"><Setter TargetName="PinnedMark" Property="Visibility" Value="Visible"/></DataTrigger></DataTemplate.Triggers>
+      </DataTemplate></ListBox.ItemTemplate>
+     </ListBox>
+     <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False" Margin="20"><Path Data="{StaticResource CopyIcon}" Stroke="{DynamicResource Accent}" StrokeThickness="1.3" Width="34" Height="34" Stretch="Uniform" Margin="0,0,0,16"/><TextBlock x:Name="EmptyTitle" Text="Seu próximo favorito começa com uma cópia." TextAlignment="Center" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap"/><TextBlock x:Name="EmptyDetail" Text="Copie textos, links ou imagens para começar." Foreground="{DynamicResource Muted}" TextAlignment="Center" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/></StackPanel>
+    </Grid>
+    <StackPanel Grid.Row="4" Margin="8,9,8,0"><TextBlock Text="↑ ↓ navegar     ↵ selecionar     esc fechar" FontSize="11" Foreground="{DynamicResource Muted}" Margin="0,0,0,5"/><TextBlock x:Name="StatusText" Text="Selecione para copiar. Depois, use Ctrl + V." TextWrapping="Wrap" Foreground="{DynamicResource Muted}" FontSize="10" MinHeight="28"/></StackPanel>
+    <StackPanel Grid.Row="5" Margin="0,6,0,0">
+     <Border CornerRadius="23" Background="{DynamicResource Glass}" BorderBrush="{DynamicResource Hairline}" BorderThickness="1" Padding="8" HorizontalAlignment="Center"><StackPanel Orientation="Horizontal">
+      <Button x:Name="PauseButton" Click="PauseClick" Padding="13,8" BorderThickness="0" Background="{DynamicResource Hover}" ToolTip="Pausar ou retomar captura" AutomationProperties.Name="Pausar ou retomar captura"><StackPanel Orientation="Horizontal"><Path x:Name="PauseGlyph" Style="{StaticResource Glyph}" Data="{StaticResource PauseIcon}" Width="12" Height="14" StrokeThickness="2.5" Margin="0,0,7,0"/><TextBlock x:Name="PauseLabel" Text="Pausar" FontWeight="SemiBold" FontSize="12"/></StackPanel></Button>
+      <Button x:Name="PinButton" Style="{StaticResource ToolButton}" Click="PinClick" Margin="6,0,0,0" ToolTip="Fixar ou desafixar" AutomationProperties.Name="Fixar ou desafixar"><Path Style="{StaticResource Glyph}" Data="{StaticResource PinIcon}"/></Button>
+      <Button x:Name="PreviewButton" Style="{StaticResource ToolButton}" Click="PreviewClick" Margin="6,0,0,0" ToolTip="Visualizar conteúdo" AutomationProperties.Name="Visualizar conteúdo"><Path Style="{StaticResource Glyph}" Data="{StaticResource EyeIcon}"/></Button>
+      <Button x:Name="DeleteButton" Style="{StaticResource ToolButton}" Click="DeleteClick" Margin="6,0,0,0" ToolTip="Excluir item" AutomationProperties.Name="Excluir item"><Path Style="{StaticResource Glyph}" Data="{StaticResource TrashIcon}"/></Button>
+      <Button x:Name="ClearButton" Style="{StaticResource ToolButton}" Click="ClearClick" Margin="6,0,0,0" ToolTip="Limpar histórico" AutomationProperties.Name="Limpar histórico"><Path Style="{StaticResource Glyph}" Data="{StaticResource ClearIcon}"/></Button>
+      <Button Style="{StaticResource ToolButton}" Click="SettingsClick" Margin="6,0,0,0" ToolTip="Preferências" AutomationProperties.Name="Preferências"><Path Style="{StaticResource Glyph}" Data="{StaticResource SettingsIcon}"/></Button>
+     </StackPanel></Border>
+     <Button x:Name="FooterButton" Content="Gratuito • aberto • feito para ficar no seu Windows" Click="AboutClick" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Muted}" FontSize="10" Padding="10,8" Margin="0,3,0,0" HorizontalAlignment="Center"/>
+    </StackPanel>
+   </Grid>
   </Grid>
-  <TextBox x:Name="SearchBox" Grid.Row="1" Margin="0,0,0,8" TextChanged="SearchChanged" AutomationProperties.Name="Buscar no histórico" ToolTip="Buscar textos, links ou dimensões de imagens"/>
-  <ComboBox x:Name="Filter" Grid.Row="2" SelectedIndex="0" SelectionChanged="FilterChanged" AutomationProperties.Name="Filtrar histórico" Margin="0,0,0,12">
-   <ComboBoxItem Content="Todos"/><ComboBoxItem Content="Fixados"/><ComboBoxItem Content="Links"/><ComboBoxItem Content="Textos"/><ComboBoxItem Content="Imagens"/>
-  </ComboBox>
-  <Grid Grid.Row="3">
-   <ListBox x:Name="Clips" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Ink}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" MouseDoubleClick="ChooseClick" MouseRightButtonUp="RowMenu" AutomationProperties.Name="Itens do histórico">
-    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="2"/><Setter Property="Margin" Value="0,0,0,6"/></Style></ListBox.ItemContainerStyle>
-    <ListBox.ItemTemplate><DataTemplate><Border Background="{DynamicResource Card}" CornerRadius="12" Padding="14"><StackPanel>
-     <Image Source="{Binding Thumbnail}" MaxHeight="115" HorizontalAlignment="Left" Stretch="Uniform"/>
-     <TextBlock Text="{Binding Clip.DisplayText}" TextWrapping="Wrap" MaxHeight="68" Margin="0,4"/>
-     <TextBlock Text="{Binding Clip.Details}" Foreground="{DynamicResource Muted}" FontSize="11"/>
-    </StackPanel></Border></DataTemplate></ListBox.ItemTemplate>
-   </ListBox>
-   <TextBlock x:Name="EmptyState" Text="Copie algo para começar.&#10;&#10;Seu histórico fica apenas neste computador." Foreground="{DynamicResource Muted}" TextAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
-  </Grid>
-  <WrapPanel Grid.Row="4" Margin="-3,12,0,8">
-   <Button Content="Usar" Click="ChooseClick" ToolTip="Copiar e, se habilitado, colar no destino (Enter)"/>
-   <Button Content="Fixar" Click="PinClick"/>
-   <Button Content="Visualizar" Click="PreviewClick"/>
-   <Button Content="Excluir" Click="DeleteClick"/>
-   <Button x:Name="PauseButton" Content="Pausar" Click="PauseClick"/>
-   <Button Content="Limpar…" Click="ClearClick"/>
-  </WrapPanel>
-  <StackPanel Grid.Row="5"><TextBlock x:Name="StatusText" Text="Busque, escolha e pressione Enter." TextWrapping="Wrap" Foreground="{DynamicResource Muted}" FontSize="12"/><DockPanel Margin="0,8,0,0"><Button Content="Conheça o Copilume" Click="AboutClick" FontSize="11"/><Button Content="Preferências" Click="SettingsClick" FontSize="11" HorizontalAlignment="Right"/></DockPanel></StackPanel>
- </Grid>
+ </Border>
 </Window>

@@ -21,6 +21,9 @@ public sealed class ClipRow(Clip clip, Func<Clip, BitmapSource?> thumbnail)
 {
     public Clip Clip => clip;
     public BitmapSource? Thumbnail => thumbnail(clip);
+    public string DisplayTitle => clip.IsImage ? clip.DisplayText : clip.SingleLine;
+    public string Metadata => $"{(clip.IsImage ? "IMAGEM" : clip.IsLink ? "LINK" : "TEXTO")}  ·  {clip.Date:HH:mm}  ·  {(clip.IsImage ? $"{Math.Max(1, clip.ByteCount / 1000):N0} KB" : $"{clip.Text.Length:N0} caracteres")}";
+    public Geometry Glyph => (Geometry)Application.Current.Resources[clip.Pinned ? "PinIcon" : clip.IsLink ? "LinkIcon" : "TextIcon"];
 }
 
 public partial class MainWindow : Window
@@ -36,7 +39,6 @@ public partial class MainWindow : Window
     private bool quitting, ready, saveWarning;
     private int hotKeyId;
     private int pasteEpoch;
-    private bool modalOpen;
     private readonly Dictionary<Guid, BitmapSource> thumbnails = new();
     private readonly List<Window> auxiliary = new();
 
@@ -67,12 +69,13 @@ public partial class MainWindow : Window
             history.Capture(new Clip { Text = "https://github.com/kushhoficial/Copilume" });
             history.Capture(new Clip { Text = "Ideias que merecem ficar por perto.\nTextos, links e imagens, em um só lugar." });
             history.Capture(new Clip { Image = ImageCodec.Demo() });
-            Tell("Prévia com dados fictícios • captura, gravação e colagem desativadas.");
+            Tell("Prévia segura. Captura e colagem desativadas.");
+            FooterButton.Content = "Prévia • dados fictícios";
         }
         ApplyAppearance();
         Closing += OnClosing;
         Closed += (_, _) => { if (demo && !quitting) Application.Current.Shutdown(); };
-        Deactivated += (_, _) => { if (auxiliary.Count == 0 && !modalOpen) Hide(); };
+        Deactivated += (_, _) => { if (auxiliary.Count == 0) Hide(); };
         ready = true;
         Refresh();
     }
@@ -80,6 +83,7 @@ public partial class MainWindow : Window
     public void Initialize()
     {
         handle = new WindowInteropHelper(this).EnsureHandle();
+        ApplyAppearance();
         if (demo) return;
         source = HwndSource.FromHwnd(handle);
         source.AddHook(WindowMessage);
@@ -157,7 +161,10 @@ public partial class MainWindow : Window
         Clips.ItemsSource = rows;
         Clips.SelectedIndex = Math.Max(0, Array.FindIndex(rows, row => row.Clip.Id == id));
         EmptyState.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyState.Text = history.Items.Count == 0 ? "Copie algo para começar.\n\nSeu histórico fica apenas neste computador." : "Nenhum item encontrado.";
+        EmptyTitle.Text = history.Items.Count == 0 ? "Seu próximo favorito começa com uma cópia." : "Nenhum item encontrado.";
+        EmptyDetail.Text = history.Items.Count == 0 ? "Copie textos, links ou imagens para começar." : "Tente outra busca ou escolha um filtro diferente.";
+        CountLabel.Text = $"{rows.Length} {(rows.Length == 1 ? "item" : "itens")}  ·  mais recentes primeiro";
+        UpdateActions();
         ShortcutBadge.Content = ShortcutName();
     }
     private BitmapSource? Thumbnail(Clip clip)
@@ -176,6 +183,22 @@ public partial class MainWindow : Window
     private Clip? Selected => (Clips.SelectedItem as ClipRow)?.Clip;
     private void SearchChanged(object sender, TextChangedEventArgs e) => Refresh();
     private void FilterChanged(object sender, SelectionChangedEventArgs e) => Refresh();
+    private void ClipSelectionChanged(object sender, SelectionChangedEventArgs e) { if (ready) UpdateActions(); }
+    private void UpdateActions()
+    {
+        PinButton.IsEnabled = PreviewButton.IsEnabled = DeleteButton.IsEnabled = Selected != null;
+        ClearButton.IsEnabled = history.Items.Count > 0;
+        PinButton.ToolTip = Selected?.Pinned == true ? "Desafixar item" : "Fixar item";
+    }
+    private void DragPanel(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left) return;
+        // Buttons inside the header retain their normal click behavior.
+        for (DependencyObject? current = e.OriginalSource as DependencyObject; current != null; current = current is Visual ? VisualTreeHelper.GetParent(current) : LogicalTreeHelper.GetParent(current))
+            if (current is Button) return;
+        if (e.LeftButton == MouseButtonState.Pressed) DragMove();
+    }
+    private void ClosePanel(object sender, RoutedEventArgs e) { pasteEpoch++; if (demo) Close(); else Hide(); }
     private void ChooseClick(object sender, RoutedEventArgs e) { if (Selected is { } clip) Use(clip, false, false); }
     private async void Use(Clip clip, bool copyOnly, bool singleLine)
     {
@@ -204,7 +227,7 @@ public partial class MainWindow : Window
     }
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == System.Windows.Input.Key.Escape) { pasteEpoch++; Hide(); e.Handled = true; }
+        if (e.Key == System.Windows.Input.Key.Escape) { ClosePanel(sender, e); e.Handled = true; }
         else if (e.Key == System.Windows.Input.Key.Enter && (SearchBox.IsKeyboardFocusWithin || Clips.IsKeyboardFocusWithin) && Selected is { } clip) { Use(clip, false, false); e.Handled = true; }
         else if ((e.Key == System.Windows.Input.Key.Apps || e.Key == System.Windows.Input.Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift) && Selected is { } selected)
         {
@@ -222,15 +245,34 @@ public partial class MainWindow : Window
     private void PinClick(object sender, RoutedEventArgs e) { if (Selected is { } clip) Pin(clip); }
     private void DeleteClick(object sender, RoutedEventArgs e) { if (Selected is { } clip) { history.Remove(clip.Id); Changed(); } }
     private void PauseClick(object sender, RoutedEventArgs e) => TogglePause();
-    private void TogglePause() { history.Paused = !history.Paused; clipboard?.Invalidate(); PauseButton.Content = history.Paused ? "Retomar" : "Pausar"; Tell(history.Paused ? "Captura pausada." : "Captura retomada. Copie algo novo para guardar."); }
+    private void TogglePause()
+    {
+        history.Paused = !history.Paused; clipboard?.Invalidate();
+        PauseLabel.Text = history.Paused ? "Retomar" : "Pausar";
+        PauseGlyph.Data = (Geometry)FindResource(history.Paused ? "PlayIcon" : "PauseIcon");
+        CaptureLabel.Text = history.Paused ? "Captura pausada" : "Somente neste computador";
+        Tell(history.Paused ? "Captura pausada." : "Captura retomada. Copie algo novo para guardar.");
+    }
     private void ClearClick(object sender, RoutedEventArgs e)
     {
-        modalOpen = true;
-        MessageBoxResult answer;
-        try { answer = MessageBox.Show(this, "Limpar recentes e preservar fixados?\n\nSim: preservar fixados.\nNão: excluir tudo, inclusive fixados.\nCancelar: manter o histórico.", "Limpar histórico", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel); }
-        finally { modalOpen = false; }
-        if (answer == MessageBoxResult.Cancel) return;
-        clipboard?.Invalidate(); history.Clear(answer == MessageBoxResult.No); Changed();
+        bool? includePinned = null;
+        var window = Auxiliary("Limpar histórico", 460, 360);
+        var panel = new StackPanel { Margin = new Thickness(26, 12, 26, 24) };
+        panel.Children.Add(new TextBlock { Text = "Um novo começo?", FontSize = 25, FontWeight = FontWeights.Bold });
+        var detail = new TextBlock { Text = "Limpe as cópias recentes e mantenha seus fixados. Você também pode escolher excluir todos os itens.", TextWrapping = TextWrapping.Wrap, LineHeight = 21, Margin = new Thickness(0, 14, 0, 20) };
+        detail.SetResourceReference(TextBlock.ForegroundProperty, "Muted"); panel.Children.Add(detail);
+        void Choice(string label, bool? value)
+        {
+            var button = new Button { Content = label, Margin = new Thickness(0, 0, 0, 8), IsCancel = value == null };
+            button.Click += (_, _) => { includePinned = value; window.Close(); }; panel.Children.Add(button);
+        }
+        Choice("Limpar recentes • preservar fixados", false);
+        Choice("Excluir tudo, inclusive fixados", true);
+        Choice("Cancelar", null);
+        window.Body.Content = panel;
+        window.ShowDialog();
+        if (includePinned == null) return;
+        clipboard?.Invalidate(); history.Clear(includePinned.Value); Changed();
     }
     private void RowMenu(object sender, MouseButtonEventArgs e)
     {
@@ -256,30 +298,41 @@ public partial class MainWindow : Window
         menu.IsOpen = true;
     }
     private void PreviewClick(object sender, RoutedEventArgs e) { if (Selected is { } clip) Preview(clip); }
-    private Window Auxiliary(string title, double width, double height)
+    private SurfaceWindow Auxiliary(string title, double width, double height)
     {
-        var window = new Window { Title = title, Width = width, Height = height, Owner = this, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+        var window = new SurfaceWindow(title) { Width = width, Height = height, Owner = this, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         auxiliary.Add(window);
         window.Closed += (_, _) => { auxiliary.Remove(window); if (!quitting) { Activate(); SearchBox.Focus(); } };
         return window;
     }
-    private void Preview(Clip clip)
+    private void Preview(Clip clip) => BuildPreview(clip).ShowDialog();
+    internal SurfaceWindow BuildPreview(Clip clip)
     {
         var window = Auxiliary("Visualizar — Copilume", 660, 520);
         if (clip.Image is { } image)
         {
-            try { window.Content = new ScrollViewer { Content = new System.Windows.Controls.Image { Source = ImageCodec.Decode(image.Png), Stretch = Stretch.Uniform, Margin = new Thickness(20) } }; }
-            catch (Exception error) when (error is IOException or InvalidDataException or FileFormatException or NotSupportedException or ArgumentException or InvalidOperationException) { window.Content = new TextBlock { Text = "Imagem inválida.", Margin = new Thickness(20) }; }
+            try { window.Body.Content = new ScrollViewer { Style = (Style)FindResource("SoftScrollViewer"), Content = new System.Windows.Controls.Image { Source = ImageCodec.Decode(image.Png), Stretch = Stretch.Uniform, Margin = new Thickness(24) } }; }
+            catch (Exception error) when (error is IOException or InvalidDataException or FileFormatException or NotSupportedException or ArgumentException or InvalidOperationException) { window.Body.Content = new TextBlock { Text = "Imagem inválida.", Margin = new Thickness(24) }; }
         }
-        else window.Content = new TextBox { Text = clip.Text, IsReadOnly = true, TextWrapping = TextWrapping.Wrap, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(20) };
-        window.ShowDialog();
+        else window.Body.Content = new TextBox { Text = clip.Text, IsReadOnly = true, TextWrapping = TextWrapping.Wrap, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(24) };
+        return window;
     }
     private void AboutClick(object sender, RoutedEventArgs e) => About();
-    private void About()
+    private void About() => BuildAbout().ShowDialog();
+    internal SurfaceWindow BuildAbout()
     {
-        modalOpen = true;
-        try { MessageBox.Show(this, "Copilume — por kushhoficial\nCopie agora. Reencontre depois.\n\nHistórico local de textos, links e imagens.\nSem conta, servidor, telemetria ou IA.\nLicença MIT.\n\nhttps://github.com/kushhoficial/Copilume", "Conheça o Copilume"); }
-        finally { modalOpen = false; }
+        var window = Auxiliary("Conheça o Copilume", 490, 530);
+        var panel = new StackPanel { Margin = new Thickness(28, 20, 28, 24) };
+        panel.Children.Add(new System.Windows.Controls.Image { Source = Icon, Width = 68, Height = 68, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 20) });
+        panel.Children.Add(new TextBlock { Text = "Copie agora.\nReencontre depois.", FontSize = 29, FontWeight = FontWeights.Bold });
+        void Detail(string text) { var label = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 18, 0, 0), LineHeight = 22 }; label.SetResourceReference(TextBlock.ForegroundProperty, "Muted"); panel.Children.Add(label); }
+        Detail("Textos, links e imagens sempre por perto. Um histórico local, simples e aberto, feito para acompanhar seu ritmo.");
+        Detail("Sem conta, nuvem, telemetria ou IA. Histórico apenas em memória por padrão.");
+        Detail("Copilume • por kushhoficial • licença MIT");
+        var project = new Button { Content = "Conhecer o projeto no GitHub", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 22, 0, 0) };
+        project.Click += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/kushhoficial/Copilume") { UseShellExecute = true });
+        panel.Children.Add(project); window.Body.Content = new ScrollViewer { Style = (Style)FindResource("SoftScrollViewer"), Content = panel };
+        return window;
     }
     private string ShortcutName()
     {
@@ -298,12 +351,17 @@ public partial class MainWindow : Window
         return true;
     }
     private void SettingsClick(object sender, RoutedEventArgs e) => ShowSettings();
-    private void ShowSettings()
+    private void ShowSettings() => BuildSettings().ShowDialog();
+    internal SurfaceWindow BuildSettings()
     {
-        var window = Auxiliary("Preferências — Copilume", 500, 650);
-        var panel = new StackPanel { Margin = new Thickness(22) };
-        void Label(string text) => panel.Children.Add(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 4) });
-        Label("Preferências");
+        var window = Auxiliary("Preferências — Copilume", 510, 740);
+        var panel = new StackPanel { Margin = new Thickness(26, 12, 26, 24) };
+        panel.Children.Add(new TextBlock { Text = "Do seu jeito.", FontSize = 28, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 16) });
+        void Label(string text)
+        {
+            var label = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 8), FontSize = 12, LineHeight = 18 };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "Muted"); panel.Children.Add(label);
+        }
         Label("Atalho global (Ctrl, Alt ou Shift + letra/número)");
         var shortcut = new TextBox { Text = ShortcutName(), IsReadOnly = true };
         shortcut.PreviewKeyDown += (_, e) =>
@@ -321,7 +379,7 @@ public partial class MainWindow : Window
         panel.Children.Add(shortcut);
         Label("Limite de itens (1 a 5000)");
         var limit = new TextBox { Text = history.Limit.ToString() }; panel.Children.Add(limit);
-        var applyLimit = new Button { Content = "Aplicar limite" };
+        var applyLimit = new Button { Content = "Aplicar limite", Margin = new Thickness(0, 8, 0, 8), HorizontalAlignment = HorizontalAlignment.Left };
         applyLimit.Click += (_, _) => { if (int.TryParse(limit.Text, out int value) && value is >= 1 and <= 5000) { settings.Limit = value; history.Limit = value; clipboard?.Invalidate(); SaveSettings(); Changed(); } else MessageBox.Show(window, "Informe um número entre 1 e 5000."); };
         panel.Children.Add(applyLimit);
         var persistence = new CheckBox { Content = "Salvar histórico entre reinicializações", IsChecked = settings.Persistent, IsEnabled = !demo };
@@ -351,12 +409,15 @@ public partial class MainWindow : Window
             catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException) { startup.IsChecked = StartupEnabled(); MessageBox.Show(window, "Não foi possível alterar a inicialização."); }
         }; panel.Children.Add(startup);
         Label("Aparência");
-        var appearance = new ComboBox { ItemsSource = new[] { "Sistema", "Claro", "Escuro" }, SelectedItem = settings.Appearance };
-        appearance.SelectionChanged += (_, _) => { settings.Appearance = appearance.SelectedItem as string ?? "Sistema"; ApplyAppearance(); SaveSettings(); }; panel.Children.Add(appearance);
+        var appearance = new ListBox { ItemsSource = new[] { "Sistema", "Claro", "Escuro" }, SelectedItem = settings.Appearance, BorderThickness = new Thickness(0), Background = Brushes.Transparent, ItemsPanel = (ItemsPanelTemplate)FindResource("SegmentedPanel"), ItemContainerStyle = (Style)FindResource("Segment") };
+        System.Windows.Automation.AutomationProperties.SetName(appearance, "Aparência");
+        appearance.SelectionChanged += (_, _) => { settings.Appearance = appearance.SelectedItem as string ?? "Sistema"; ApplyAppearance(); SaveSettings(); };
+        var appearanceSurface = new Border { CornerRadius = new CornerRadius(17), Padding = new Thickness(3), BorderThickness = new Thickness(1), Child = appearance };
+        appearanceSurface.SetResourceReference(Border.BackgroundProperty, "Hover"); appearanceSurface.SetResourceReference(Border.BorderBrushProperty, "Hairline"); panel.Children.Add(appearanceSurface);
         Label("Pause a captura antes de copiar segredos. Marcações de privacidade dependem do aplicativo de origem.");
-        var close = new Button { Content = "Concluído" }; close.Click += (_, _) => window.Close(); panel.Children.Add(close);
-        window.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-        window.ShowDialog();
+        var close = new Button { Content = "Concluído", Margin = new Thickness(0, 12, 0, 0) }; close.Click += (_, _) => window.Close(); panel.Children.Add(close);
+        window.Body.Content = new ScrollViewer { Style = (Style)FindResource("SoftScrollViewer"), Content = panel };
+        return window;
     }
     private static bool StartupEnabled()
     {
@@ -370,19 +431,11 @@ public partial class MainWindow : Window
     }
     private void ApplyAppearance()
     {
-        bool dark = settings.Appearance == "Escuro";
-        if (settings.Appearance == "Sistema")
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-            dark = key?.GetValue("AppsUseLightTheme") is int value && value == 0;
-        }
-        void Brush(string name, string color) => Application.Current.Resources[name] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
-        if (SystemParameters.HighContrast)
-        {
-            Application.Current.Resources["Surface"] = SystemColors.WindowBrush; Application.Current.Resources["Card"] = SystemColors.WindowBrush;
-            Application.Current.Resources["Ink"] = SystemColors.WindowTextBrush; Application.Current.Resources["Muted"] = SystemColors.WindowTextBrush;
-        }
-        else { Brush("Surface", dark ? "#0B2033" : "#F1F8FC"); Brush("Card", dark ? "#15344B" : "#FFFFFF"); Brush("Ink", dark ? "#E6F6FF" : "#0B2A44"); Brush("Muted", dark ? "#A9BDD0" : "#52677D"); }
+        bool dark = Theme.Apply(settings.Appearance);
+        bool acrylic = handle != IntPtr.Zero && WindowMaterial.Apply(this, dark);
+        ShellBorder.SetResourceReference(Border.BackgroundProperty, acrylic ? "WindowTint" : "Surface");
+        Ambient.Visibility = SystemParameters.HighContrast || !WindowMaterial.TransparencyEnabled() ? Visibility.Collapsed : Visibility.Visible;
+        foreach (var window in auxiliary.OfType<SurfaceWindow>()) window.RefreshMaterial();
     }
     private void OnClosing(object? sender, CancelEventArgs e) { if (!quitting && !demo) { e.Cancel = true; pasteEpoch++; Hide(); } }
     public void Quit()

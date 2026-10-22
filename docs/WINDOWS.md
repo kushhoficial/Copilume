@@ -26,6 +26,13 @@ Os pacotes iniciais não têm assinatura Authenticode. O Windows pode apresentar
 - Pausar/retomar captura, aparência Sistema/Claro/Escuro, suporte a alto contraste.
 - Atalho global configurável, ícone de bandeja e início no login opcional, desligado por padrão.
 - Persistência criptografada opcional, desligada por padrão.
+- Interface inspirada na composição macOS: painel arredondado e redimensionável, cabeçalho em vidro, filtros segmentados, cartões compactos e barra de ícones. Preferências, prévia e apresentação seguem a mesma identidade.
+
+O Windows 11 22H2+ pode usar **Desktop Acrylic**, pela [API pública do DWM](https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwm_systembackdrop_type). O efeito depende da versão do Windows, composição e opção de transparência; o Windows 10 usa o mesmo desenho com superfícies sólidas e gradientes suaves. Alto contraste e transparência desativada recebem superfícies sólidas. O material nativo é próprio do Windows e varia com o fundo; não é o Liquid Glass do macOS.
+
+![Interface Windows clara, renderização 2×](windows-light.png)
+
+![Interface Windows escura, renderização 2×](windows-dark.png)
 
 Os itens continuam na ordem de captura; fixar protege do descarte enquanto há capacidade. Limite inicial de 200 itens, ajustável de 1 a 5000, com teto total de 24 MB. O limite máximo prevalece sobre os fixados. Se todos os espaços estiverem ocupados por fixados, novas cópias podem ser descartadas. Fixar não habilita persistência.
 
@@ -53,9 +60,9 @@ Instale o **SDK .NET 10** oficial no Windows. Na raiz do repositório, em PowerS
 ./package-windows.ps1
 ```
 
-O teste usa somente dados sintéticos: modelo, criptografia, codec PNG/DIB, política de privacidade e abertura/renderização da interface nos dois temas. Não captura nem sobrescreve o clipboard real e não registra atalhos ou inicialização. As prévias ficam em `build/windows-preview/`.
+O teste usa somente dados sintéticos: modelo, criptografia, codec PNG/DIB, política de privacidade e abertura/renderização da interface nos dois temas. Inclui busca, filtros, fixação, pausa, troca de aparência, estados vazios, prévias, apresentação e tamanho mínimo. Não captura nem sobrescreve o clipboard real e não registra atalhos ou inicialização. As prévias ficam em `build/windows-preview/`, em resolução 2×. A renderização WPF usa o acabamento sólido do próprio app: ela não captura o material composto pelo DWM sobre o desktop.
 
-O build gera `build/windows/win-x64/Copilume.exe` com os arquivos de execução. O empacotamento gera `dist/Copilume-<versão>-windows-x64.zip` e `SHA256SUMS-windows-x64.txt`, recusando sobrescrever um pacote existente. Para ARM64:
+O build gera `build/windows/<versão>/win-x64/Copilume.exe` com os arquivos de execução, separado das versões anteriores. O empacotamento gera `dist/Copilume-<versão>-windows-x64.zip` e `SHA256SUMS-windows-x64.txt`, recusando sobrescrever um pacote existente. Para ARM64:
 
 ```powershell
 ./package-windows.ps1 -Architecture arm64

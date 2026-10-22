@@ -11,7 +11,7 @@ try {
     if (Test-Path -LiteralPath $destination) { throw "Refusing to replace existing package: $destination" }
     & ./build-windows.ps1 -Architecture $Architecture -DotNet $DotNet
     New-Item -ItemType Directory -Force (Join-Path $PSScriptRoot 'dist') | Out-Null
-    Compress-Archive -Path (Join-Path $PSScriptRoot "build/windows/win-$Architecture/*") -DestinationPath $destination
+    Compress-Archive -Path (Join-Path $PSScriptRoot "build/windows/$version/win-$Architecture/*") -DestinationPath $destination
     $hash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([System.IO.Path]::GetFileName($destination))" | Set-Content -LiteralPath (Join-Path $PSScriptRoot "dist/SHA256SUMS-windows-$Architecture.txt") -Encoding ascii
     Write-Host "Package: $destination"
