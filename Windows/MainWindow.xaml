@@ -1,0 +1,34 @@
+<Window x:Class="Copilume.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="Copilume — por kushhoficial" Style="{StaticResource {x:Type Window}}" Width="580" Height="700" MinWidth="480" MinHeight="500" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" PreviewKeyDown="OnKeyDown">
+ <Grid Margin="22">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <Grid Margin="0,0,0,18">
+   <StackPanel Orientation="Horizontal"><Image Source="Assets/AppIcon.png" Width="48" Height="48" Margin="0,0,12,0"/><StackPanel><TextBlock FontSize="28" FontWeight="Bold"><Run Text="Copi"/><Run Text="lume" Foreground="#38BDF8"/></TextBlock><TextBlock Text="por kushhoficial" Foreground="{DynamicResource Muted}"/></StackPanel></StackPanel>
+   <Button x:Name="ShortcutBadge" Content="Alt + V" HorizontalAlignment="Right" VerticalAlignment="Center" Click="SettingsClick" ToolTip="Configurar atalho"/>
+  </Grid>
+  <TextBox x:Name="SearchBox" Grid.Row="1" Margin="0,0,0,8" TextChanged="SearchChanged" AutomationProperties.Name="Buscar no histórico" ToolTip="Buscar textos, links ou dimensões de imagens"/>
+  <ComboBox x:Name="Filter" Grid.Row="2" SelectedIndex="0" SelectionChanged="FilterChanged" AutomationProperties.Name="Filtrar histórico" Margin="0,0,0,12">
+   <ComboBoxItem Content="Todos"/><ComboBoxItem Content="Fixados"/><ComboBoxItem Content="Links"/><ComboBoxItem Content="Textos"/><ComboBoxItem Content="Imagens"/>
+  </ComboBox>
+  <Grid Grid.Row="3">
+   <ListBox x:Name="Clips" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Ink}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" MouseDoubleClick="ChooseClick" MouseRightButtonUp="RowMenu" AutomationProperties.Name="Itens do histórico">
+    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="2"/><Setter Property="Margin" Value="0,0,0,6"/></Style></ListBox.ItemContainerStyle>
+    <ListBox.ItemTemplate><DataTemplate><Border Background="{DynamicResource Card}" CornerRadius="12" Padding="14"><StackPanel>
+     <Image Source="{Binding Thumbnail}" MaxHeight="115" HorizontalAlignment="Left" Stretch="Uniform"/>
+     <TextBlock Text="{Binding Clip.DisplayText}" TextWrapping="Wrap" MaxHeight="68" Margin="0,4"/>
+     <TextBlock Text="{Binding Clip.Details}" Foreground="{DynamicResource Muted}" FontSize="11"/>
+    </StackPanel></Border></DataTemplate></ListBox.ItemTemplate>
+   </ListBox>
+   <TextBlock x:Name="EmptyState" Text="Copie algo para começar.&#10;&#10;Seu histórico fica apenas neste computador." Foreground="{DynamicResource Muted}" TextAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
+  </Grid>
+  <WrapPanel Grid.Row="4" Margin="-3,12,0,8">
+   <Button Content="Usar" Click="ChooseClick" ToolTip="Copiar e, se habilitado, colar no destino (Enter)"/>
+   <Button Content="Fixar" Click="PinClick"/>
+   <Button Content="Visualizar" Click="PreviewClick"/>
+   <Button Content="Excluir" Click="DeleteClick"/>
+   <Button x:Name="PauseButton" Content="Pausar" Click="PauseClick"/>
+   <Button Content="Limpar…" Click="ClearClick"/>
+  </WrapPanel>
+  <StackPanel Grid.Row="5"><TextBlock x:Name="StatusText" Text="Busque, escolha e pressione Enter." TextWrapping="Wrap" Foreground="{DynamicResource Muted}" FontSize="12"/><DockPanel Margin="0,8,0,0"><Button Content="Conheça o Copilume" Click="AboutClick" FontSize="11"/><Button Content="Preferências" Click="SettingsClick" FontSize="11" HorizontalAlignment="Right"/></DockPanel></StackPanel>
+ </Grid>
+</Window>

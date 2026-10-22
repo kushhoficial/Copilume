@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0 — Windows e macOS (em preparação)
+
+- Aplicativo nativo WPF/.NET para Windows 10/11 x64 e ARM64, mantendo Swift/AppKit no macOS.
+- Histórico de textos, links e imagens PNG/DIB, busca sem acentos, filtros, fixados, prévia, limpeza e cópia em uma linha.
+- Alt + V configurável, bandeja, temas, pausa, início no login e colagem automática opcionais.
+- Histórico apenas em memória por padrão; persistência opcional criptografada pelo DPAPI do usuário Windows.
+- Captura por eventos, processamento serial de imagens e descarte de resultados antigos; limites equivalentes aos do Mac e respeito às marcações de privacidade do Windows.
+- Build e ZIP portáteis com runtime incluído, SHA-256 e CI para as duas plataformas.
+- Testes Windows sintéticos e renderização nos dois temas; fontes macOS preservadas.
+
 ## 1.3.0 — Histórico de imagens
 
 - Captura raster de PNG, TIFF e JPEG (e formatos ImageIO), priorizando a imagem quando a cópia também contém texto.

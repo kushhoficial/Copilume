@@ -7,11 +7,15 @@
 
 [![Build and test](https://github.com/kushhoficial/Copilume/actions/workflows/build.yml/badge.svg)](https://github.com/kushhoficial/Copilume/actions/workflows/build.yml)
 
-**Copie agora. Reencontre depois.** Histórico de textos, links e imagens para macOS, gratuito e open source sob licença [MIT](LICENSE).
+**Copie agora. Reencontre depois.** Histórico de textos, links e imagens para **macOS e Windows**, gratuito e open source sob licença [MIT](LICENSE).
+
+**Windows:** aplicativo nativo com **Alt + V**, busca, filtros, fixados, imagens, bandeja e persistência criptografada opcional. Veja [instalação, compilação e privacidade no Windows](docs/WINDOWS.md). A versão Windows é nova neste código; a Release macOS v1.3.0 anterior não contém esse pacote. Os comandos e detalhes macOS continuam abaixo.
+
+![Interface Windows em tema escuro com dados fictícios](docs/windows-dark.png)
 
 ![Interface clara](docs/preview.png)
 
-O Copilume traz a praticidade de Windows + V para o Mac: copie normalmente, abra com **Option + V**, pesquise e escolha o texto que quer usar novamente. Tudo funciona localmente, sem conta, servidor, telemetria ou API de IA.
+O Copilume traz a praticidade de Windows + V para o Mac e amplia essa experiência no Windows: copie normalmente, abra com **Option + V no Mac** ou **Alt + V no Windows**, pesquise e escolha o conteúdo que quer usar novamente. Tudo funciona localmente, sem conta, servidor, telemetria ou API de IA.
 
 O nome combina copiar com lume. As buscas públicas realizadas não retornaram resultados para “Copilume”; isso não certifica disponibilidade de marca, domínio ou nome em todas as lojas.
 
