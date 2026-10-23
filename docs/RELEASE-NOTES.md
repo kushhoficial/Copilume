@@ -1,6 +1,25 @@
 Copilume 1.4.2 — por **kushhoficial**. Histórico local de textos, links e imagens para **macOS e Windows**.
 
-## Windows — novo
+## Downloads — escolha seu sistema
+
+### macOS
+
+[**Baixar para macOS — DMG universal**](https://github.com/kushhoficial/Copilume/releases/download/v1.4.2/Copilume-1.4.2-universal.dmg)
+
+macOS 13+, Apple Silicon e Intel. Abra o `.dmg`, arraste **Copilume.app** para **Applications** e abra a cópia instalada. Atalho: **Option + V**. [Guia macOS](https://github.com/kushhoficial/Copilume/blob/main/docs/MACOS.md).
+
+### Windows
+
+- [**Baixar para Windows x64 — ZIP**](https://github.com/kushhoficial/Copilume/releases/download/v1.4.2/Copilume-1.4.2-windows-x64.zip): processadores Intel ou AMD de 64 bits.
+- [**Baixar para Windows ARM64 — ZIP**](https://github.com/kushhoficial/Copilume/releases/download/v1.4.2/Copilume-1.4.2-windows-arm64.zip): processadores ARM, como Snapdragon.
+
+Windows 10 22H2 ou Windows 11. Confira a arquitetura em **Configurações → Sistema → Sobre → Tipo de sistema**. Extraia **todo** o ZIP e abra **Copilume.exe**; o runtime já está incluído. Atalho: **Alt + V**. [Guia Windows](https://github.com/kushhoficial/Copilume/blob/main/docs/WINDOWS.md).
+
+Os arquivos `.dmg` são para macOS; os ZIPs com `windows` no nome são para Windows. Os arquivos `SHA256SUMS` servem para verificar a integridade dos downloads. Os ZIPs/TARs **Source code** gerados pelo GitHub contêm o código-fonte; para usar o aplicativo, escolha um dos pacotes acima.
+
+---
+
+## Novidades do Windows
 
 - Aplicativo nativo para Windows 10/11, com **Alt + V** configurável e ícone de bandeja.
 - Textos, links e imagens, busca sem acentos, filtros, fixados, prévia e cópia em uma linha.

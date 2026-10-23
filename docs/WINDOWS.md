@@ -1,10 +1,17 @@
 # Copilume para Windows
 
+[Voltar ao projeto](../README.md) · [Versão macOS](MACOS.md)
+
 Aplicativo nativo WPF/.NET, por **kushhoficial**, com APIs públicas do Windows e sem pacotes de terceiros. O código macOS em Swift/AppKit continua independente e preservado.
 
 ## Usar
 
-Requer Windows **10 22H2 ou Windows 11**, x64 ou ARM64. Baixe o ZIP correspondente à arquitetura nos artefatos da CI ou em uma Release que inclua Windows. A Release macOS v1.3.0 anterior a esta implementação não contém o pacote Windows.
+Requer Windows **10 22H2 ou Windows 11**, x64 ou ARM64. Baixe o ZIP correspondente à arquitetura do seu computador:
+
+- [Windows x64 — versão 1.4.2](https://github.com/kushhoficial/Copilume/releases/download/v1.4.2/Copilume-1.4.2-windows-x64.zip): PCs com processadores Intel ou AMD de 64 bits.
+- [Windows ARM64 — versão 1.4.2](https://github.com/kushhoficial/Copilume/releases/download/v1.4.2/Copilume-1.4.2-windows-arm64.zip): PCs com processador ARM, como Snapdragon.
+
+Confira **Configurações → Sistema → Sobre → Tipo de sistema** se não souber qual escolher. [Todas as versões](https://github.com/kushhoficial/Copilume/releases).
 
 1. Extraia **todo** o ZIP para uma pasta permanente de seu usuário.
 2. Abra `Copilume.exe`. O runtime .NET já está incluído no pacote; não requer instalação separada nem administrador.
