@@ -27,12 +27,18 @@ Os pacotes iniciais não têm assinatura Authenticode. O Windows pode apresentar
 - Atalho global configurável, ícone de bandeja e início no login opcional, desligado por padrão.
 - Persistência criptografada opcional, desligada por padrão.
 - Interface inspirada na composição macOS: painel arredondado e redimensionável, cabeçalho em vidro, filtros segmentados, cartões compactos e barra de ícones. Preferências, prévia e apresentação seguem a mesma identidade.
+- Menus de bandeja, itens e edição de texto com o mesmo desenho em vidro, ícones e atalhos. Setas navegam pelas ações disponíveis; Enter escolhe e Esc fecha. O menu também fecha ao perder o foco.
+- O contorno é recortado tanto na janela Win32 quanto no conteúdo WPF; a moldura clássica é suprimida também ao perder foco. Reflexos suaves acompanham o ponteiro nas superfícies de vidro, respeitando as opções de transparência e animação do sistema.
 
 O Windows 11 22H2+ pode usar **Desktop Acrylic**, pela [API pública do DWM](https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwm_systembackdrop_type). O efeito depende da versão do Windows, composição e opção de transparência; o Windows 10 usa o mesmo desenho com superfícies sólidas e gradientes suaves. Alto contraste e transparência desativada recebem superfícies sólidas. O material nativo é próprio do Windows e varia com o fundo; não é o Liquid Glass do macOS.
 
 ![Interface Windows clara, renderização 2×](windows-light.png)
 
 ![Interface Windows escura, renderização 2×](windows-dark.png)
+
+![Menu da bandeja, prévia com dados fictícios](windows-tray-menu.png)
+
+![Menu de item, prévia com dados fictícios](windows-item-menu.png)
 
 Os itens continuam na ordem de captura; fixar protege do descarte enquanto há capacidade. Limite inicial de 200 itens, ajustável de 1 a 5000, com teto total de 24 MB. O limite máximo prevalece sobre os fixados. Se todos os espaços estiverem ocupados por fixados, novas cópias podem ser descartadas. Fixar não habilita persistência.
 
@@ -60,7 +66,7 @@ Instale o **SDK .NET 10** oficial no Windows. Na raiz do repositório, em PowerS
 ./package-windows.ps1
 ```
 
-O teste usa somente dados sintéticos: modelo, criptografia, codec PNG/DIB, política de privacidade e abertura/renderização da interface nos dois temas. Inclui busca, filtros, fixação, pausa, troca de aparência, estados vazios, prévias, apresentação e tamanho mínimo. Não captura nem sobrescreve o clipboard real e não registra atalhos ou inicialização. As prévias ficam em `build/windows-preview/`, em resolução 2×. A renderização WPF usa o acabamento sólido do próprio app: ela não captura o material composto pelo DWM sobre o desktop.
+O teste usa somente dados sintéticos: modelo, criptografia, codec PNG/DIB, política de privacidade e abertura/renderização da interface nos dois temas. Inclui busca, filtros, fixação, pausa, troca de aparência, estados vazios, prévias, apresentação, menus e tamanho mínimo. Consulta também o contorno do HWND, a área de cliente e o hit test de redimensionamento nativo. Não captura nem sobrescreve o clipboard real e não registra atalhos ou inicialização. As prévias ficam em `build/windows-preview/`, em resolução 2×. A renderização WPF usa o acabamento sólido do próprio app: ela não captura o material composto pelo DWM sobre o desktop.
 
 O build gera `build/windows/<versão>/win-x64/Copilume.exe` com os arquivos de execução, separado das versões anteriores. O empacotamento gera `dist/Copilume-<versão>-windows-x64.zip` e `SHA256SUMS-windows-x64.txt`, recusando sobrescrever um pacote existente. Para ARM64:
 
@@ -79,6 +85,8 @@ dotnet run --project Windows/Copilume.Windows.csproj -- --demo --dark
 ```
 
 `--demo` não lê clipboard, preferências nem histórico, não grava dados, não registra atalho e não envia teclas. `--light` força o tema claro. Feche a janela ou use Alt + F4 para encerrar a prévia. Para uma prévia que encerra sozinha, acrescente `--smoke-test`.
+
+Para inspeção gráfica isolada, `--demo --demo-tray --inspect-ui` adiciona um ícone de bandeja identificado como prévia e mantém o painel acessível na barra de tarefas. As proteções do modo de demonstração continuam ativas; isso não é o modo normal de uso.
 
 ## Atualizar ou remover
 

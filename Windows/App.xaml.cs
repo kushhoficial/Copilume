@@ -2,11 +2,13 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace Copilume;
 
 public partial class App : Application
 {
+    public App() => EventManager.RegisterClassHandler(typeof(TextBox), FrameworkElement.ContextMenuOpeningEvent, new ContextMenuEventHandler(GlassTextBoxMenus.Open));
     private Mutex? instance;
     protected override void OnStartup(StartupEventArgs e)
     {

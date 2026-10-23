@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.2 — Vidro e menus consistentes (em preparação)
+
+- Recorte explícito da janela nativa e dos descendentes WPF: o fundo acompanha os cantos arredondados, inclusive após troca de tema e redimensionamento.
+- Moldura clássica e sua pintura ao perder foco removidas; área de conteúdo ocupa todo o HWND, com redimensionamento pelas bordas preservado.
+- Menu da bandeja substituído por janela em vidro própria, compartilhada pelos menus de itens e de edição de texto.
+- Ícones vetoriais, separadores, estados desabilitados, foco de teclado, navegação por setas e fechamento por Esc ou perda de foco.
+- Posicionamento dos menus limitado à área útil do monitor, incluindo coordenadas negativas e abertura acima da barra de tarefas.
+- Reflexo suave acompanhando o ponteiro e transições curtas, respeitando alto contraste, transparência e animações do sistema.
+- Retorno ao painel ao fechar o menu por Esc, com restauração de foco antes da execução da ação e proteção contra fechamento reentrante.
+- 142 verificações sintéticas: 78 de modelo/serviços e 64 de interface/integração nativa. Inspeção gráfica isolada do painel, menu do item e menu de edição.
+
 ## 1.4.1 — Acabamento Windows (em preparação)
 
 - Interface Windows redesenhada a partir da composição macOS: painel arredondado, cabeçalho em vidro, busca em cápsula e cinco filtros segmentados.

@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Threading;
 using Copilume;
 
 internal static class Program
@@ -135,6 +139,10 @@ internal static class Program
         ((Border)window.FindName("ShellBorder")).SetResourceReference(Border.BackgroundProperty, "Surface");
         window.UpdateLayout();
         Snapshot(window, path);
+        Check(NativeCorners(window), "main HWND excludes square corners and keeps center");
+        Check(ClientFillsWindow(window), "main window has no invisible resize frame behind its surface");
+        Check(ResizeEdge(window), "borderless window retains native edge resize hit testing");
+        Check(((Border)window.FindName("ShellBorder")).Clip is RectangleGeometry, "rounded surface clips descendants");
         Check(window.FindName("Clips") is ListBox { Items.Count: 4 }, "demo renders four synthetic clips");
         var list = (ListBox)window.FindName("Clips");
         var imageClip = ((ClipRow)list.Items[0]).Clip;
@@ -172,16 +180,86 @@ internal static class Program
         var about = window.BuildAbout(); about.Show(); about.SolidPreview(); about.UpdateLayout();
         Check(Descendants<TextBlock>(about).Any(x => x.Text.Contains("kushhoficial") && x.Text.Contains("MIT")), "project window preserves signature and license");
         Snapshot(about, Path.ChangeExtension(path, null) + "-about.png"); about.Close();
+        window.OpenHistory(); Pump();
+        var trayMenu = window.BuildTrayMenu(); window.OpenMenu(trayMenu, new Point(200, 200), false); trayMenu.SolidPreview(); Pump();
+        Check(NativeCorners(trayMenu), "tray menu HWND is rounded");
+        Check(ClientFillsWindow(trayMenu), "menu glass fills the entire native client area");
+        Check(Descendants<Button>(trayMenu).Count() == 5, "tray uses five glass menu actions");
+        Snapshot(trayMenu, Path.ChangeExtension(path, null) + "-tray-menu.png");
+        Descendants<Button>(trayMenu).Single(x => ((MenuAction)x.Tag).Title == "Pausar captura").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Pump();
+        Check(((TextBlock)window.FindName("PauseLabel")).Text == "Retomar", "tray action pauses capture through shared callback");
+        ((Button)window.FindName("PauseButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        var itemMenu = window.BuildItemMenu(imageClip); window.OpenMenu(itemMenu, new Point(200, 200), false); itemMenu.SolidPreview(); Pump();
+        Check(NativeCorners(itemMenu), "item menu HWND is rounded");
+        var singleLine = Descendants<Button>(itemMenu).Single(x => ((MenuAction)x.Tag).Title == "Copiar em uma linha");
+        Check(!singleLine.IsEnabled, "image menu disables text-only action");
+        Snapshot(itemMenu, Path.ChangeExtension(path, null) + "-item-menu.png");
+        var buttons = Descendants<Button>(itemMenu).ToArray(); buttons[0].Focus();
+        itemMenu.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(itemMenu), 0, Key.Down) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+        Check(buttons[2].IsKeyboardFocusWithin, "menu arrow navigation skips disabled actions");
+        itemMenu.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(itemMenu), 0, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent }); Pump();
+        Check(!itemMenu.IsVisible && !itemMenu.ActionInvoked, "Escape closes menu without executing an action");
+        Check(window.IsVisible, "Escape returns to history without hiding the panel");
+        var textBox = new TextBox { Text = "Synthetic text", IsReadOnly = true }; textBox.SelectAll();
+        var editorMenu = GlassTextBoxMenus.Create(textBox);
+        window.OpenMenu(editorMenu, new Point(200, 200), false); editorMenu.SolidPreview(); Pump();
+        var editorActions = Descendants<Button>(editorMenu).ToArray();
+        Check(editorActions.Single(x => ((MenuAction)x.Tag).Title == "Copiar").IsEnabled && !editorActions.Single(x => ((MenuAction)x.Tag).Title == "Colar").IsEnabled, "read-only text menu permits selection copy and blocks paste");
+        Check(editorActions.Single(x => ((MenuAction)x.Tag).Title == "Selecionar tudo").IsEnabled && !editorActions.Single(x => ((MenuAction)x.Tag).Title == "Recortar").IsEnabled, "read-only text menu keeps selection and blocks cut");
+        Snapshot(editorMenu, Path.ChangeExtension(path, null) + "-text-menu.png"); editorMenu.Close();
+        Check(GlassMenuWindow.Place(new Point(1900, 1030), new Size(310, 300), new Rect(0, 0, 1920, 1040)) == new Point(1610, 724), "tray menu stays above bottom taskbar and inside work area");
+        Check(GlassMenuWindow.Place(new Point(-1850, -30), new Size(310, 300), new Rect(-1920, -1080, 1920, 1040)) == new Point(-1850, -340), "menu handles monitor with negative desktop coordinates");
         ((TextBox)window.FindName("SearchBox")).Text = "no synthetic clip matches this";
         Check(list.Items.Count == 0 && !((Button)window.FindName("DeleteButton")).IsEnabled && !((Button)window.FindName("PreviewButton")).IsEnabled, "empty search disables item actions");
         ((TextBox)window.FindName("SearchBox")).Text = "";
         window.Width = window.MinWidth; window.Height = window.MinHeight; window.UpdateLayout();
+        Pump();
+        Check(NativeCorners(window), "native rounded contour survives resize and theme changes");
         ((Border)window.FindName("ShellBorder")).SetResourceReference(Border.BackgroundProperty, "Surface");
         var footer = (Button)window.FindName("FooterButton");
         var location = footer.TranslatePoint(new Point(), window);
         Check(location.Y + footer.ActualHeight <= window.ActualHeight && location.X >= 0, "footer remains visible at minimum window size");
         Snapshot(window, Path.ChangeExtension(path, null) + "-compact.png");
         window.Quit();
+    }
+
+    private static void Pump() => Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.ApplicationIdle, new Action(() => { }));
+    [DllImport("user32.dll")] private static extern int GetWindowRgn(IntPtr hwnd, IntPtr region);
+    [DllImport("gdi32.dll")] private static extern IntPtr CreateRectRgn(int left, int top, int right, int bottom);
+    [DllImport("gdi32.dll")] private static extern bool PtInRegion(IntPtr region, int x, int y);
+    [DllImport("gdi32.dll")] private static extern bool DeleteObject(IntPtr value);
+    [StructLayout(LayoutKind.Sequential)] private struct NativeRect { public int Left, Top, Right, Bottom; }
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr window, out NativeRect rect);
+    [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr window, out NativeRect rect);
+    [DllImport("user32.dll")] private static extern IntPtr SendMessage(IntPtr window, int message, IntPtr wParam, IntPtr lParam);
+    private static bool ResizeEdge(Window window)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        GetWindowRect(handle, out var bounds);
+        int x = bounds.Right - 2, y = (bounds.Top + bounds.Bottom) / 2;
+        var coordinate = new IntPtr((y << 16) | (x & 0xFFFF));
+        return SendMessage(handle, 0x0084, IntPtr.Zero, coordinate).ToInt32() == 11;
+    }
+    private static bool ClientFillsWindow(Window window)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        return GetWindowRect(handle, out var outer) && GetClientRect(handle, out var client) &&
+            outer.Right - outer.Left == client.Right && outer.Bottom - outer.Top == client.Bottom;
+    }
+    private static bool NativeCorners(Window window)
+    {
+        Pump();
+        var region = CreateRectRgn(0, 0, 0, 0);
+        try
+        {
+            double dpi = VisualTreeHelper.GetDpi(window).DpiScaleX;
+            int width = (int)(window.ActualWidth * dpi), height = (int)(window.ActualHeight * dpi);
+            return GetWindowRgn(new WindowInteropHelper(window).Handle, region) > 1 &&
+                !PtInRegion(region, 0, 0) && !PtInRegion(region, width - 1, 0) &&
+                !PtInRegion(region, 0, height - 1) && !PtInRegion(region, width - 1, height - 1) &&
+                PtInRegion(region, width / 2, height / 2);
+        }
+        finally { DeleteObject(region); }
     }
 
     private static IEnumerable<T> Descendants<T>(DependencyObject node) where T : DependencyObject

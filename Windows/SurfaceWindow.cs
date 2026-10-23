@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shell;
 
 namespace Copilume;
 
@@ -11,15 +10,16 @@ namespace Copilume;
 internal sealed class SurfaceWindow : Window
 {
     internal ContentControl Body { get; } = new();
-    private readonly Border surface;
+    private readonly GlassBorder surface;
     internal SurfaceWindow(string title)
     {
         Title = title;
         Style = (Style)Application.Current.FindResource(typeof(Window));
         WindowStyle = WindowStyle.None;
         Background = Brushes.Transparent;
+        ShowInTaskbar = false;
+        WindowContour.Attach(this, 24);
         MinWidth = 420; MinHeight = 350;
-        WindowChrome.SetWindowChrome(this, new WindowChrome { CaptionHeight = 0, ResizeBorderThickness = new Thickness(6), CornerRadius = new CornerRadius(24), GlassFrameThickness = new Thickness(0), UseAeroCaptionButtons = false });
         var layout = new Grid();
         layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         layout.RowDefinitions.Add(new RowDefinition());
@@ -39,7 +39,7 @@ internal sealed class SurfaceWindow : Window
             DragMove();
         };
         layout.Children.Add(header); Grid.SetRow(Body, 1); layout.Children.Add(Body);
-        surface = new Border { CornerRadius = new CornerRadius(24), BorderThickness = new Thickness(1), Child = layout };
+        surface = new GlassBorder { CornerRadius = new CornerRadius(24), BorderThickness = new Thickness(1), Child = layout };
         surface.SetResourceReference(Border.BackgroundProperty, "Surface"); surface.SetResourceReference(Border.BorderBrushProperty, "Hairline");
         Content = surface;
         SourceInitialized += (_, _) => RefreshMaterial();

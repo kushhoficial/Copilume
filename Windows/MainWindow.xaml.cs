@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     private IntPtr handle, target;
     private HwndSource? source;
     private Forms.NotifyIcon? tray;
+    private GlassMenuWindow? activeMenu;
     private DispatcherTimer? foregroundTimer;
     private bool quitting, ready, saveWarning;
     private int hotKeyId;
@@ -46,6 +47,9 @@ public partial class MainWindow : Window
     {
         this.demo = demo;
         InitializeComponent();
+        WindowContour.Attach(this, 24);
+        if (demo) Title += " — Prévia isolada";
+        if (demo && Environment.GetCommandLineArgs().Contains("--inspect-ui")) ShowInTaskbar = true;
         Icon = new BitmapImage(new Uri("pack://application:,,,/Copilume;component/Assets/AppIcon.png"));
         if (!demo)
         {
@@ -75,7 +79,7 @@ public partial class MainWindow : Window
         ApplyAppearance();
         Closing += OnClosing;
         Closed += (_, _) => { if (demo && !quitting) Application.Current.Shutdown(); };
-        Deactivated += (_, _) => { if (auxiliary.Count == 0) Hide(); };
+        Deactivated += (_, _) => { if (auxiliary.Count == 0 && activeMenu == null && !(demo && Environment.GetCommandLineArgs().Contains("--inspect-ui"))) Hide(); };
         ready = true;
         Refresh();
     }
@@ -84,31 +88,75 @@ public partial class MainWindow : Window
     {
         handle = new WindowInteropHelper(this).EnsureHandle();
         ApplyAppearance();
-        if (demo) return;
+        if (demo)
+        {
+            if (Environment.GetCommandLineArgs().Contains("--demo-tray")) InitializeTray();
+            return;
+        }
         source = HwndSource.FromHwnd(handle);
         source.AddHook(WindowMessage);
         clipboard = new ClipboardService(handle, history, Changed, Tell);
         if (!Native.AddClipboardFormatListener(handle)) Tell("Falha ao iniciar captura. Reinicie o Copilume.");
         if (!ChangeShortcut(settings.Modifiers, settings.Key)) Tell("Atalho ocupado. Escolha outro nas preferências.");
-        using var imageStream = Application.GetResourceStream(new Uri("pack://application:,,,/Copilume;component/Assets/AppIcon.png")).Stream;
-        using var bitmap = new System.Drawing.Bitmap(imageStream);
-        var iconHandle = bitmap.GetHicon();
-        using var borrowedIcon = System.Drawing.Icon.FromHandle(iconHandle);
-        tray = new Forms.NotifyIcon { Text = "Copilume — Alt + V", Icon = (System.Drawing.Icon)borrowedIcon.Clone(), Visible = true };
-        DestroyIcon(iconHandle);
-        tray.DoubleClick += (_, _) => OpenHistory();
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Abrir histórico", null, (_, _) => OpenHistory());
-        menu.Items.Add("Pausar / retomar captura", null, (_, _) => TogglePause());
-        menu.Items.Add("Preferências…", null, (_, _) => { OpenHistory(); ShowSettings(); });
-        menu.Items.Add("Conheça o Copilume", null, (_, _) => { OpenHistory(); About(); });
-        menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Sair do Copilume", null, (_, _) => Quit());
-        tray.ContextMenuStrip = menu;
+        InitializeTray();
         foregroundTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         foregroundTimer.Tick += (_, _) => RememberTarget();
         foregroundTimer.Start();
         RememberTarget();
+    }
+    private void InitializeTray()
+    {
+        using var imageStream = Application.GetResourceStream(new Uri("pack://application:,,,/Copilume;component/Assets/AppIcon.png")).Stream;
+        using var bitmap = new System.Drawing.Bitmap(imageStream);
+        var iconHandle = bitmap.GetHicon();
+        using var borrowedIcon = System.Drawing.Icon.FromHandle(iconHandle);
+        tray = new Forms.NotifyIcon { Text = demo ? "Copilume — prévia isolada" : "Copilume — histórico local", Icon = (System.Drawing.Icon)borrowedIcon.Clone(), Visible = true };
+        DestroyIcon(iconHandle);
+        tray.DoubleClick += (_, _) => OpenHistory();
+        tray.MouseUp += (_, e) =>
+        {
+            if (e.Button != Forms.MouseButtons.Right) return;
+            var point = Forms.Cursor.Position;
+            Dispatcher.BeginInvoke(new Action(() => OpenMenu(BuildTrayMenu(), new Point(point.X, point.Y))));
+        };
+    }
+    internal GlassMenuWindow BuildTrayMenu() => new("Copilume", demo ? "Prévia isolada • dados fictícios" : "Seu histórico, sempre por perto.", new MenuAction?[]
+    {
+        new("Abrir histórico", "CopyIcon", OpenHistory, ShortcutName()),
+        new(history.Paused ? "Retomar captura" : "Pausar captura", history.Paused ? "PlayIcon" : "PauseIcon", TogglePause),
+        null,
+        new("Preferências", "SettingsIcon", () => { OpenHistory(); ShowSettings(); }),
+        new("Conheça o Copilume", "InfoIcon", () => { OpenHistory(); About(); }),
+        null,
+        new("Sair do Copilume", "ExitIcon", Quit, Destructive: true)
+    });
+    internal void OpenMenu(GlassMenuWindow menu, Point screenPixels, bool animate = true, Window? owner = null)
+    {
+        activeMenu?.Close(); activeMenu = menu;
+        if (owner != null) menu.Owner = owner;
+        else if (IsVisible) menu.Owner = this;
+        var returnOwner = menu.Owner;
+        bool ownerWasVisible = returnOwner?.IsVisible == true;
+        menu.Closed += (_, _) =>
+        {
+            if (menu.ActionInvoked || menu.RestoreOwnerFocus)
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+                {
+                    if (!quitting && ownerWasVisible && returnOwner != null)
+                    {
+                        if (!returnOwner.IsVisible) returnOwner.Show();
+                        returnOwner.Activate();
+                    }
+                    if (activeMenu == menu) activeMenu = null;
+                }));
+                return;
+            }
+            if (activeMenu == menu) activeMenu = null;
+            if (demo && Environment.GetCommandLineArgs().Contains("--inspect-ui")) return;
+            if (!menu.ActionInvoked) Dispatcher.BeginInvoke(new Action(() => { if (activeMenu == null && auxiliary.Count == 0 && !IsActive) Hide(); }));
+        };
+        menu.ShowAt(screenPixels, animate);
     }
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool DestroyIcon(IntPtr icon);
     private IntPtr WindowMessage(IntPtr window, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -132,6 +180,7 @@ public partial class MainWindow : Window
     public void OpenHistory()
     {
         pasteEpoch++;
+        activeMenu?.Close();
         if (!demo) RememberTarget();
         foreach (var window in auxiliary.ToArray()) window.Close();
         if (!IsVisible) Show();
@@ -283,20 +332,18 @@ public partial class MainWindow : Window
     private void ShowRowMenu(ListBoxItem row, Clip clip)
     {
         Clips.SelectedItem = row.DataContext;
-        var menu = new ContextMenu { PlacementTarget = row };
-        void Item(string label, Action action, bool enabled = true)
-        {
-            var item = new MenuItem { Header = label, IsEnabled = enabled };
-            item.Click += (_, _) => action(); menu.Items.Add(item);
-        }
-        Item("Copiar sem colar", () => Use(clip, true, false));
-        Item("Copiar em uma linha", () => Use(clip, true, true), !clip.IsImage);
-        Item(clip.Pinned ? "Desafixar" : "Fixar", () => Pin(clip));
-        Item("Visualizar", () => Preview(clip));
-        Item("Excluir", () => { history.Remove(clip.Id); Changed(); });
-        row.ContextMenu = menu;
-        menu.IsOpen = true;
+        OpenMenu(BuildItemMenu(clip), row.PointToScreen(new Point(30, row.ActualHeight - 8)));
     }
+    internal GlassMenuWindow BuildItemMenu(Clip clip) => new("Ações do item", clip.IsImage ? clip.DisplayText : clip.IsLink ? "Link da área de transferência" : "Texto da área de transferência", new MenuAction?[]
+    {
+        new("Copiar sem colar", "CopyIcon", () => Use(clip, true, false)),
+        new("Copiar em uma linha", "TextIcon", () => Use(clip, true, true), Enabled: !clip.IsImage),
+        null,
+        new(clip.Pinned ? "Desafixar" : "Fixar", "PinIcon", () => Pin(clip)),
+        new("Visualizar conteúdo", "EyeIcon", () => Preview(clip)),
+        null,
+        new("Excluir item", "TrashIcon", () => { history.Remove(clip.Id); Changed(); }, Destructive: true)
+    });
     private void PreviewClick(object sender, RoutedEventArgs e) { if (Selected is { } clip) Preview(clip); }
     private SurfaceWindow Auxiliary(string title, double width, double height)
     {
@@ -441,10 +488,11 @@ public partial class MainWindow : Window
     public void Quit()
     {
         quitting = true; pasteEpoch++; clipboard?.Invalidate();
+        activeMenu?.Close();
         foreach (var window in auxiliary.ToArray()) window.Close();
         foregroundTimer?.Stop();
         if (!demo) { Native.RemoveClipboardFormatListener(handle); if (hotKeyId != 0) Native.UnregisterHotKey(handle, hotKeyId); source?.RemoveHook(WindowMessage); }
-        if (tray != null) { tray.Visible = false; tray.ContextMenuStrip?.Dispose(); tray.Icon?.Dispose(); tray.Dispose(); }
+        if (tray != null) { tray.Visible = false; tray.Icon?.Dispose(); tray.Dispose(); }
         Application.Current.Shutdown();
     }
 }
