@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.4.2 — Vidro e menus consistentes (em preparação)
+
+- Recorte explícito da janela nativa e dos descendentes WPF: o fundo acompanha os cantos arredondados, inclusive após troca de tema e redimensionamento.
+- Moldura clássica e sua pintura ao perder foco removidas; área de conteúdo ocupa todo o HWND, com redimensionamento pelas bordas preservado.
+- Menu da bandeja substituído por janela em vidro própria, compartilhada pelos menus de itens e de edição de texto.
+- Ícones vetoriais, separadores, estados desabilitados, foco de teclado, navegação por setas e fechamento por Esc ou perda de foco.
+- Posicionamento dos menus limitado à área útil do monitor, incluindo coordenadas negativas e abertura acima da barra de tarefas.
+- Reflexo suave acompanhando o ponteiro e transições curtas, respeitando alto contraste, transparência e animações do sistema.
+- Retorno ao painel ao fechar o menu por Esc, com restauração de foco antes da execução da ação e proteção contra fechamento reentrante.
+- 142 verificações sintéticas: 78 de modelo/serviços e 64 de interface/integração nativa. Inspeção gráfica isolada do painel, menu do item e menu de edição.
+
+## 1.4.1 — Acabamento Windows (em preparação)
+
+- Interface Windows redesenhada a partir da composição macOS: painel arredondado, cabeçalho em vidro, busca em cápsula e cinco filtros segmentados.
+- Cartões compactos com ícones vetoriais, miniaturas proporcionais, metadados e indicador de fixação; barra de ações arredondada com nomes acessíveis e foco de teclado.
+- Desktop Acrylic pela API pública do DWM no Windows 11 22H2+, com acabamento sólido e gradientes no Windows 10 e sistemas sem transparência. Respeita alto contraste e a opção de transparência do Windows.
+- Preferências, prévia, apresentação e confirmação de limpeza com a mesma identidade; controles arredondados, alternadores e aparência segmentada.
+- Tipografia suavizada, assets escalados com alta qualidade e prévias PNG em resolução 2×.
+- Testes de interface ampliados para ações, estados vazios, privacidade no modo de demonstração, troca de tema, prévias e tamanho mínimo.
+
+## 1.4.0 — Windows e macOS (em preparação)
+
+- Aplicativo nativo WPF/.NET para Windows 10/11 x64 e ARM64, mantendo Swift/AppKit no macOS.
+- Histórico de textos, links e imagens PNG/DIB, busca sem acentos, filtros, fixados, prévia, limpeza e cópia em uma linha.
+- Alt + V configurável, bandeja, temas, pausa, início no login e colagem automática opcionais.
+- Histórico apenas em memória por padrão; persistência opcional criptografada pelo DPAPI do usuário Windows.
+- Captura por eventos, processamento serial de imagens e descarte de resultados antigos; limites equivalentes aos do Mac e respeito às marcações de privacidade do Windows.
+- Build e ZIP portáteis com runtime incluído, SHA-256 e CI para as duas plataformas.
+- Testes Windows sintéticos e renderização nos dois temas; fontes macOS preservadas.
+
 ## 1.3.0 — Histórico de imagens
 
 - Captura raster de PNG, TIFF e JPEG (e formatos ImageIO), priorizando a imagem quando a cópia também contém texto.

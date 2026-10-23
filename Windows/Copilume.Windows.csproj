@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Copilume</AssemblyName>
+    <RootNamespace>Copilume</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Authors>kushhoficial</Authors>
+    <Copyright>© 2026 kushhoficial. MIT License.</Copyright>
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../VERSION').Trim())</Version>
+    <FileVersion>$(Version).$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../BUILD_NUMBER').Trim())</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="../Assets/AppIcon.png" Link="Assets/AppIcon.png" />
+    <Compile Remove="Tests/**/*.cs" />
+  </ItemGroup>
+</Project>

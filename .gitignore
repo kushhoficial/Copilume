@@ -16,3 +16,6 @@ dist/
 *.mobileprovision
 history.json
 *.log
+.tools/
+**/bin/
+**/obj/
